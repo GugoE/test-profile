@@ -32,6 +32,7 @@
 <script>
 import { PROFILE_NAME } from '@/router/routes.json'
 import { setCookie } from "@/utils/global";
+import { useStore } from "@/store/index"
 import { required } from 'vuelidate/lib/validators'
 import UiInput from '@/components/ui/Input'
 import UiButton from "@/components/ui/Button";
@@ -59,39 +60,26 @@ export default {
 
   methods: {
     async signIn () {
+      const store =  useStore()
       this.$v.$touch()
 
       if (!this.$v.$invalid) {
         this.disabledBtn = true
-        await fetch('https://dummyjson.com/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: this.login,
-            password: this.password,
+        await store.signIn({username: this.login, password: this.password})
+          .then((response) => {
+            this.disabledBtn = false
+            const date = new Date();
+            date.setDate(date.getDate() + 1);
+
+            setCookie({key: 'authToken', value: response.data.token}, date)
+            setCookie({key: 'userId', value: response.data.id})
+
+            this.$router.push({name: PROFILE_NAME})
           })
-        })
-            .then((response) => {
-              if (response.status === 200) {
-                return response.json()
-              } else {
-                this.showAlert = true
-              }
-
-              return false
-            })
-            .then((data) => {
-              this.disabledBtn = false
-              if (data) {
-                const date = new Date();
-                date.setDate(date.getDate() + 1);
-
-                setCookie({key: 'authToken', value: data.token}, date)
-                setCookie({key: 'userId', value: data.id})
-
-                this.$router.push({name: PROFILE_NAME})
-              }
-            })
+          .catch(() => {
+            this.showAlert = true
+            this.disabledBtn = false
+          })
       }
     }
   }

@@ -64,11 +64,12 @@
 
 <script>
 import { getCookie } from "@/utils/global";
+import { useStore } from "@/store/index"
 import UiCard from '@/components/ui/Card'
 import UiLoader from "@/components/ui/Loader";
 export default {
   name: "ProfilePage",
-  components: {UiLoader, UiCard},
+  components: { UiLoader, UiCard },
 
   data: () => ({
     loader: true,
@@ -77,13 +78,14 @@ export default {
 
   created () {
     const userId = getCookie('userId')
-
-    fetch(`https://dummyjson.com/users/${userId}`)
-        .then(res => res.json())
-        .then((res) => {
-          this.user = res
-          this.loader = false
-        });
+    const store =  useStore()
+    console.log(userId);
+    store.user(userId)
+      .then((res) => {
+        console.log(res);
+        this.user = res.data
+        this.loader = false
+      });
   },
 
   computed: {
